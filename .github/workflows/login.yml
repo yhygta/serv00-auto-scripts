@@ -2,34 +2,42 @@ name: Login
 
 on:
   workflow_dispatch:
-  
   schedule:
     - cron: '7 12 */7 * *'
 
 env:
   ACCOUNTS_JSON: ${{ secrets.ACCOUNTS_JSON }}
 
-jobs:  
-  login:  
-    runs-on: ubuntu-latest  
-  
-    steps:  
-      - name: Checkout repository  
-        uses: actions/checkout@v3  
-  
-      - name: Set up Node.js  
-        uses: actions/setup-node@v3  
-        with:  
-          node-version: '20.x'  
-  
-      - name: Install dependencies  
-        run: npm install puppeteer  
-  
-      - name: Create accounts.json  
-        run: echo "$ACCOUNTS_JSON" > accounts.json  
-  
-      - name: Login to website  
-        run: |  
-          set -e  
-          xvfb-run --server-args="-screen 0 1280x1024x24" node login.js
+jobs:
+  login:
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+
+      # 添加 Chrome 设置
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@latest
+        with:
+          chrome-version: stable
+
+      - name: Install dependencies
+        run: npm install puppeteer
+
+      - name: Create accounts.json
+        run: echo "$ACCOUNTS_JSON" > accounts.json
+
+      # 修改登录步骤，添加必要的系统配置
+      - name: Login to website
+        run: |
+          sudo sysctl -w kernel.unprivileged_userns_clone=1
+          # 安装必要的依赖
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          xvfb-run --server-args="-screen 0 1280x1024x24" node login.js
